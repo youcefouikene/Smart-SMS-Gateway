@@ -11,7 +11,7 @@ export default function SecondPage() {
       <div className="mb-[48px]">
         Lorem ipsum dolor sit amet, consectetur adipiscing elit.
       </div>
-      <div className="flex gap-[20px] items-center justify-center">
+      <div className="flex gap-[20px] items-center justify-center pb-[60px]">
         <div className="mt-[40px]">
           <img alt="img1" src={img1}></img>
         </div>

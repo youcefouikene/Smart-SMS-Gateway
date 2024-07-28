@@ -13,21 +13,21 @@ export default function FifthPage() {
         Lorem ipsum dolor sit amet, consectetur adipiscing elit.
       </div>
       <div className="flex gap-[20px] items-center justify-center">
-        <div className="">
+        <div className="flex flex-col items-center justify-center font-semibold text-[24px]">
           <img alt="img1" src={img1}></img>
+          <div className="pt-[30px] pb-[60px]">Dinning</div>
         </div>
-        <div className="">
+        <div className="flex flex-col items-center justify-center font-semibold text-[24px] ">
           <img alt="img2" src={img2}></img>
+          <div className="pt-[30px] pb-[60px]">Living</div>
         </div>
-        <div className="">
+        <div className="flex flex-col items-center justify-center font-semibold text-[24px]">
           {" "}
           <img alt="img3" src={img3}></img>
-        </div>
-        <div className="">
-          {" "}
-          <img alt="img3" src={img4}></img>
+          <div className="pt-[30px] pb-[60px]">Bedroom</div>
         </div>
       </div>
+      <div className="w-full h-[1px] flex-shrink-0 bg-gray-300"></div>
     </div>
   );
 }

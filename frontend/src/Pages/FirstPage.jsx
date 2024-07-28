@@ -1,13 +1,20 @@
 import React from "react";
-import image from "../Assets/first-image.png";
-import NavBar from "../Components/navbar";
 import NewArrival from "../Components/NewArrival";
+import image from "../Assets/first-image.png";
 
 export default function FirstPage() {
   return (
-    <div>
-      <NavBar className="fixed top-0 w-full object-cover" />
-      <img src={image} alt="imageyus" className="w-full h-screen " />
+    <div
+      className="h-screen w-full"
+      style={{
+        backgroundImage: `url(${image})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}
+    >
+      <div className="pl-[720px] pt-[165px] flex items-center justify-center">
+        <NewArrival />
+      </div>
     </div>
   );
 }

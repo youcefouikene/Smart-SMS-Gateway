@@ -9,15 +9,22 @@ import ThirdPage from "./Pages/ThirdPage";
 import FourthPage from "./Pages/FourthPage";
 import FifthPage from "./Pages/FifthPage";
 import SixthPage from "./Pages/SixthPage";
+import SeventhPage from "./Pages/SeventhPage";
+import Info from "./Components/informations";
 
 function App() {
   return (
     <div>
+      <NavBar />
+      <FirstPage />
+      <Info />
       <SecondPage />
+      <SeventhPage />
       <FifthPage />
+      <SixthPage />
+
       <ThirdPage />
       <FourthPage />
-      <SixthPage />
     </div>
   );
 }
