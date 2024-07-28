@@ -1,6 +1,6 @@
-import img1 from "../Assets/g1.png";
-import img2 from "../Assets/g2.png";
-import img3 from "../Assets/g3.png";
+import img1 from "../Assets/Images/g1.png";
+import img2 from "../Assets/Images/g2.png";
+import img3 from "../Assets/Images/g3.png";
 
 export default function SecondPage() {
   return (

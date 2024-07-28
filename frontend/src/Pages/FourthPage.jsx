@@ -1,31 +1,32 @@
-import React from "react";
-import Submit from "../Components/submit";
-import IG1 from "../Assets/IG-1.png";
-import IG2 from "../Assets/IG-2.png";
-import IG3 from "../Assets/IG-3.png";
-import IG4 from "../Assets/IG-4.png";
+import img1 from "../Assets/Images/room1.png";
+import img2 from "../Assets/Images/room2.png";
+import img3 from "../Assets/Images/room3.png";
+
 export default function FourthPage() {
   return (
-    <div className="flex justify-between items-center bg-[#03344F] text-white h-[365px]">
-      <div className="ml-[140px] w-[400px] text-white">
-        <div className="text-white font-bold mb-[20px] text-[23px] ">
-          Beauty Care
-        </div>
-        <div className="mb-[20px]">
-          Do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim
-          ad minim veniam,  quis nostrud exercitation ullamco laboris.
-        </div>
-        <div className="font-bold text-[23px] ">Follow Us</div>
+    <div className="flex justify-center flex-col items-center">
+      <div className="mt-[48px] mb-[20px] font-bold text-[30px]">
+        Browse The Range
       </div>
-      <div>
-        <div className="font-bold text-[23px] mb-[20px]">Instagram Shop</div>
-        <div className="flex gap-[20px]">
-          <img src={IG1}></img>
-          <img src={IG2}></img>
-          <img src={IG3}></img>
-          <img src={IG4} className="mr-[140px]"></img>
+      <div className="mb-[48px]">
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+      </div>
+      <div className="flex gap-[20px] items-center justify-center">
+        <div className="flex flex-col items-center justify-center font-semibold text-[24px]">
+          <img alt="img1" src={img1}></img>
+          <div className="pt-[30px] pb-[60px]">Dinning</div>
+        </div>
+        <div className="flex flex-col items-center justify-center font-semibold text-[24px] ">
+          <img alt="img2" src={img2}></img>
+          <div className="pt-[30px] pb-[60px]">Living</div>
+        </div>
+        <div className="flex flex-col items-center justify-center font-semibold text-[24px]">
+          {" "}
+          <img alt="img3" src={img3}></img>
+          <div className="pt-[30px] pb-[60px]">Bedroom</div>
         </div>
       </div>
+      <div className="w-full h-[1px] flex-shrink-0 bg-gray-300"></div>
     </div>
   );
 }

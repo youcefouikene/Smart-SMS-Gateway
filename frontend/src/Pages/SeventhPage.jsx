@@ -1,29 +1,31 @@
-import img from "../Assets/eclipse.png";
+import React from "react";
+import IG1 from "../Assets/Images/IG-1.png";
+import IG2 from "../Assets/Images/IG-2.png";
+import IG3 from "../Assets/Images/IG-3.png";
+import IG4 from "../Assets/Images/IG-4.png";
+
 export default function SeventhPage() {
   return (
-    <div className="bg-[#F2F5FF] flex justify-between items-center">
-      <div className="ml-[160px]">
-        <div className="font-bold text-[32px] mb-[20px]">
-          Beautify Your Space
+    <div className="flex justify-between items-center bg-[#03344F] text-white h-[365px]">
+      <div className="ml-[140px] w-[400px]">
+        <div className="text-white font-bold mb-[20px] text-[23px]">
+          Beauty Care
         </div>
-        <div className="text-[#666666] text-[20px]">
-          Do eiusmod tempor incididunt ut labore et
+        <div className="mb-[20px]">
+          Do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim
+          ad minim veniam, quis nostrud exercitation ullamco laboris.
         </div>
-        <div className="text-[#666666] text-[20px]">
-          dolore magna aliqua. Ut enim ad minim veniam,
-        </div>
-        <div className="text-[#666666] text-[20px] mb-[30px]">
-          quis nostrud exercitation ullamco laboris.
-        </div>
-        <div>
-          <button className="bg-[#054C73] rounded-[50px]">
-            <div className="font-bold text-white px-[57px] py-[24px]">
-              Learn More
-            </div>
-          </button>
+        <div className="font-bold text-[23px]">Follow Us</div>
+      </div>
+      <div>
+        <div className="font-bold text-[23px] mb-[20px]">Instagram Shop</div>
+        <div className="flex gap-[20px]">
+          <img src={IG1} alt="first" />
+          <img src={IG2} alt="second" />
+          <img src={IG3} alt="third" />
+          <img src={IG4} alt="fourth" className="mr-[140px]" />
         </div>
       </div>
-      <img className="py-[60px] pr-[140px]" alt="img" src={img} />
     </div>
   );
 }
