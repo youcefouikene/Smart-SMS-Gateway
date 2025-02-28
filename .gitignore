@@ -1,0 +1,43 @@
+# Frontend (React)
+/frontend/node_modules/
+/frontend/build/
+/frontend/.pnp
+/frontend/.pnp.js
+/frontend/.env.local
+/frontend/.env.development.local
+/frontend/.env.test.local
+/frontend/.env.production.local
+/frontend/npm-debug.log*
+/frontend/yarn-debug.log*
+/frontend/yarn-error.log*
+
+# Backend (FastAPI)
+/backend/__pycache__/
+/backend/*.py[cod]
+/backend/*$py.class
+/backend/venv/
+/backend/.env
+/backend/.venv
+/backend/env/
+/backend/ENV/
+
+# Mais conservez requirements.txt
+!/backend/requirements.txt
+
+# Logs
+*.log
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
