@@ -7,13 +7,34 @@ from auth import get_password_hash
 
 # Opérations CRUD
 
+# def create_user(user: UserCreate):
+#     hashed_password = get_password_hash(user.password)
+#     user_dict = user.model_dump()
+#     user_dict["hashed_password"] = hashed_password
+#     user_dict.pop("password")
+#     db.users.insert_one(user_dict)
+#     return user_dict
+
+
 def create_user(user: UserCreate):
     hashed_password = get_password_hash(user.password)
-    user_dict = user.model_dump()
-    user_dict["hashed_password"] = hashed_password
-    user_dict.pop("password")
+
+    default_settings = SMSNotificationSettings(
+        agendaFields=[],  # Aucun champ d'agenda au départ
+        phoneNumber="",  # Numéro de téléphone vide
+        keywords=[]  # Liste vide de mots-clés
+    )
+
+    user_dict = {
+        "username": user.username,
+        "email": user.email,
+        "hashed_password": hashed_password,
+        "settings": default_settings.model_dump()  # Convertir en dict pour MongoDB
+    }
+
     db.users.insert_one(user_dict)
     return user_dict
+
 
 def update_user_settings(username: str, settings: SMSNotificationSettings):
     db.users.update_one({"username": username}, {"$set": {"settings": settings.dict()}})
@@ -37,6 +58,8 @@ def add_notification_time_to_keyword(username: str, keyword: str, notification_t
     settings = user.settings
     for kw in settings.keywords:
         if kw.text == keyword:
+            if notification_time in kw.notificationTimes:
+                return None  # Éviter les doublons
             kw.notificationTimes.append(notification_time)
             break
     else:
@@ -100,6 +123,6 @@ def update_user_agenda_fields(username: str, new_fields: List[str]):
         return None
 
     settings = user.settings
-    settings.selectedFields = new_fields
+    settings.agendaFields = new_fields
     update_user_settings(username, settings)
     return settings
