@@ -11,9 +11,19 @@ from crud import (
 from auth import get_current_user, get_password_hash, authenticate_user, create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
 from models import User
 from datetime import timedelta
-
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # URL de votre frontend React
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 # Routes
 
@@ -43,7 +53,15 @@ async def login(user: UserLogin):
     )
 
     # Retourner le token au lieu du message "Connexion réussie"
-    return {"access_token": access_token, "token_type": "bearer"}
+    # return {"access_token": access_token, "token_type": "bearer"}
+    # return(db_user)
+    return {
+        "username": db_user.username,
+        "email": db_user.email,
+        "settings": db_user.settings,  # Si `settings` existe dans ton modèle utilisateur
+        "access_token": access_token,
+        "token_type": "bearer",
+    }
 
 
 @app.post("/add-keyword")
@@ -96,11 +114,21 @@ async def get_users():
     return {"users": users}
 
 @app.get("/user-settings/{username}")
-async def get_user_settings(username: str):
+async def get_settings_for_user(username: str):
     settings = get_user_settings(username)
     if not settings:
         raise HTTPException(status_code=404, detail="Utilisateur ou paramètres non trouvés")
     return settings
+
+@app.put("/update-settings")
+async def update_settings(
+    settings: SMSNotificationSettings,
+    current_user: User = Depends(get_current_user)
+):
+    updated = update_user_settings(current_user.username, settings)
+    if not updated:
+        raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
+    return {"message": "Paramètres mis à jour avec succès"}
 
 @app.get("/all-settings")
 async def get_all_settings():
@@ -126,3 +154,21 @@ async def update_agenda_fields(
     if not settings:
         raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
     return {"message": "Champs de l'agenda mis à jour avec succès"}
+
+@app.post("/save-settings")
+async def save_user_settings(
+    agendaFields:List[str] , phoneNumber: str, current_user: User = Depends(get_current_user)
+):
+    user = get_user_by_username(current_user.username)
+    if not user:
+        raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
+
+    settings = update_user_agenda_fields(current_user.username, agendaFields)
+    if not settings:
+        raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
+    
+    settings = update_user_phone_number(current_user.username, phoneNumber)
+    if not settings:
+        raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
+    
+    return {"message": "Paramètres enregistrés avec succès"}
