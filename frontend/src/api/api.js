@@ -3,9 +3,27 @@ import axios from 'axios';
 const API_URL = 'http://localhost:8000'; // Ajustez selon l'URL de votre backend
 
 
+// Create an Axios instance
+const api = axios.create({
+  baseURL: API_URL,
+});
+
+// Add a response interceptor to handle token expiration
+api.interceptors.response.use(
+  (response) => response, // Return response normally if successful
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      // If the token is invalid or expired, remove user data and redirect to login
+      localStorage.removeItem("user");
+      window.location.href = "/login"; // Redirect to login
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const login = async (username, password) => {
   try {
-    const response = await axios.post(`${API_URL}/login`, {
+    const response = await api.post(`${API_URL}/login`, {
       username: username,
       password: password,
     });
@@ -23,7 +41,7 @@ export const login = async (username, password) => {
 };
 
 export const register = async (username, email, password) => {
-  const response = await axios.post(`${API_URL}/register`, {
+  const response = await api.post(`${API_URL}/register`, {
     username,
     email,
     password
@@ -35,7 +53,7 @@ export const addKeyword = async (keyword, firstNotificationTime, token) => {
   try {
     // console.log("Données envoyées :", { keyword, firstNotificationTime });
 
-    const response = await axios.post(
+    const response = await api.post(
       `${API_URL}/add-keyword`,
       null, // Pas de body JSON
       {
@@ -55,7 +73,7 @@ export const addKeyword = async (keyword, firstNotificationTime, token) => {
 
 export const removeKeyword = async (keyword, token) => {
   try {
-    const response = await axios.delete(`${API_URL}/delete-keyword`, {
+    const response = await api.delete(`${API_URL}/delete-keyword`, {
       params: { keyword },
       headers: {
         Authorization: `Bearer ${token}`,
@@ -71,7 +89,7 @@ export const removeKeyword = async (keyword, token) => {
 
 export const getUserSettings = async (username) => {
   try {
-    const response = await axios.get(`${API_URL}/user-settings/${username}`);
+    const response = await api.get(`${API_URL}/user-settings/${username}`);
     return response.data;
   } catch (error) {
     console.error("Erreur lors de la récupération des paramètres utilisateur :", error);
@@ -81,7 +99,7 @@ export const getUserSettings = async (username) => {
 
 export const addNotificationTime = async (keyword, notificationTime, token) => {
   try {
-    const response = await axios.post(
+    const response = await api.post(
       `${API_URL}/add-notification-time`,
       null, 
       {
@@ -103,7 +121,7 @@ export const addNotificationTime = async (keyword, notificationTime, token) => {
 
 export const deleteNotificationTime = async (keyword, notificationTime, token) => {
   try {
-    const response = await axios.delete(`${API_URL}/delete-notification-time`, {
+    const response = await api.delete(`${API_URL}/delete-notification-time`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -124,7 +142,7 @@ export const deleteNotificationTime = async (keyword, notificationTime, token) =
 export const saveSettings = async (phoneNumber, agendaFields, token) => {
   try {
 
-    const response = await axios.post(
+    const response = await api.post(
       `${API_URL}/save-settings`,
       agendaFields,
       {

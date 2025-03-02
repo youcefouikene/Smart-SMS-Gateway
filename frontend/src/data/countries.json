@@ -1,0 +1,10 @@
+[
+    { "name": "Algeria", "code": "+213" },
+    { "name": "Tunisia", "code": "+216" },
+    { "name": "Morocco", "code": "+212" },
+    { "name": "France", "code": "+33" },
+    { "name": "United States", "code": "+1" },
+    { "name": "Belgium", "code": "+32" },
+    { "name": "United Kingdom", "code": "+44" },
+    { "name": "Germany", "code": "+49" }
+]
