@@ -7,7 +7,13 @@ import {
   MinusCircle,
 } from "lucide-react";
 import { addKeyword , removeKeyword , getUserSettings , addNotificationTime , deleteNotificationTime , saveSettings} from "../api/api";
+import countryCodes from "../data/countries.json"
 
+
+const removeCountryCode = (fullPhoneNumber) => {
+  const foundCode = countryCodes.find(({ code }) => fullPhoneNumber.startsWith(code));
+  return foundCode ? fullPhoneNumber.slice(foundCode.code.length) : fullPhoneNumber;
+};
 
 const SMSNotificationSettings = () => {
   const navigate = useNavigate();
@@ -29,17 +35,7 @@ const SMSNotificationSettings = () => {
   
   // États pour le numéro de téléphone
   const [phoneNumber, setPhoneNumber] = useState("");
-  const countryCodes = [
-    { "name": "Algeria", "code": "+213" },
-    { "name": "Tunisia", "code": "+216" },
-    { "name": "Morocco", "code": "+212" },
-    { "name": "France", "code": "+33" },
-    { "name": "United States", "code": "+1" },
-    { "name": "Belgium", "code": "+32" },
-    { "name": "United Kingdom", "code": "+44" },
-    { "name": "Germany", "code": "+49" }
-  ]
-  const [selectedCountry, setSelectedCountry] = useState(countryCodes[0]); // DZ par défaut
+  const [selectedCountry, setSelectedCountry] = useState(countryCodes[0]);
   
   // États pour les mots-clés et minuteries
   const [keywords, setKeywords] = useState([]);
@@ -71,7 +67,7 @@ const SMSNotificationSettings = () => {
           // Initialisation des paramètres à partir des données mises à jour
           if (updatedSettings) {
             if (updatedSettings.phoneNumber) {
-              setPhoneNumber(updatedSettings.phoneNumber);
+              setPhoneNumber(removeCountryCode(updatedSettings.phoneNumber));
             }
   
             if (updatedSettings.agendaFields && Array.isArray(updatedSettings.agendaFields)) {
@@ -114,17 +110,31 @@ const SMSNotificationSettings = () => {
     const agendaFields = Object.keys(selectedFields).filter(
       (key) => selectedFields[key]
     );
+
+    if (agendaFields.length === 0) {
+      alert("Please select at least one agenda field.");
+      return;
+    }
+
+    if (!phoneNumber.trim()) {
+      alert("Please enter a phone number.");
+      return;
+    }
+
+    const fullPhoneNumber = `${selectedCountry.code}${phoneNumber.trim()}`;
+
     try {
       const token = user.access_token;
       
-      await saveSettings(phoneNumber, agendaFields, token);
+      await saveSettings(fullPhoneNumber, agendaFields, token);
       
-      console.log("Paramètres enregistrés avec succès !");
+      console.log("Settings saved successfully!");
     } catch (error) {
-      console.error("Erreur lors de l'enregistrement :", error);
-      alert("Échec de l'enregistrement des paramètres.");
+      console.error("Error saving settings:", error);
+      alert("Failed to save settings.");
     }
   };
+
   
 
   //==============================================================================
@@ -439,9 +449,11 @@ const SMSNotificationSettings = () => {
                       <input
                         type="number"
                         value={newKeywordMinutes}
-                        onChange={(e) =>
-                          setNewKeywordMinutes(parseInt(e.target.value) || 0)
-                        }
+                        min="0"
+                        onChange={(e) => {
+                          const value = parseInt(e.target.value, 10);
+                          setNewKeywordMinutes(value >= 0 ? value : 0);
+                        }}
                         className="w-16 border border-gray-300 rounded-l py-2 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
                       />
                       <div className="px-3 py-2 border border-l-0 border-gray-300 bg-gray-50 text-sm text-gray-500 rounded-r">
@@ -475,9 +487,11 @@ const SMSNotificationSettings = () => {
                         <input
                           type="number"
                           value={newNotifMinutes}
-                          onChange={(e) =>
-                            setNewNotifMinutes(parseInt(e.target.value) || 15)
-                          }
+                          min="0"
+                          onChange={(e) => {
+                            const value = parseInt(e.target.value, 10);
+                            setNewNotifMinutes(value >= 0 ? value : 0);
+                          }}
                           className="w-16 border border-gray-300 rounded-l py-2 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
                         />
                         <div className="px-3 py-2 border border-l-0 border-gray-300 bg-gray-50 text-sm text-gray-500 rounded-r">
