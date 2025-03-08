@@ -1,16 +1,6 @@
 from pydantic import BaseModel, EmailStr
 from typing import List, Optional
-
-# Validé
-class KeywordSettings(BaseModel):
-    text: str
-    notificationTimes: List[int]
-
-# Validé
-class SMSNotificationSettings(BaseModel):
-    agendaFields: List[str]
-    phoneNumber: str
-    keywords: List[KeywordSettings]
+from .settings import SMSNotificationSettings
 
 # Validé
 class User(BaseModel):
@@ -18,6 +8,7 @@ class User(BaseModel):
     email: EmailStr
     hashed_password: str
     settings: Optional[SMSNotificationSettings] = None
+    google_token: Optional[str] = None
 
 # Validé
 class UserCreate(BaseModel):
@@ -27,5 +18,5 @@ class UserCreate(BaseModel):
 
 # Validé
 class UserLogin(BaseModel):
-    username: str
+    email: str
     password: str

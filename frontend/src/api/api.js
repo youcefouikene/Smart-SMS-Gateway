@@ -21,10 +21,10 @@ api.interceptors.response.use(
   }
 );
 
-export const login = async (username, password) => {
+export const login = async (email, password) => {
   try {
     const response = await api.post(`${API_URL}/login`, {
-      username: username,
+      email: email,
       password: password,
     });
 
@@ -40,11 +40,19 @@ export const login = async (username, password) => {
   }
 };
 
-export const register = async (username, email, password) => {
-  const response = await api.post(`${API_URL}/register`, {
+export const registerInit = async (username, email, password) => {
+  const response = await api.post('/register/init', {
     username,
     email,
     password
+  });
+  return response.data;
+};
+
+export const registerComplete = async (registrationId, authCode) => {
+  const response = await api.post('/register/complete', {
+    registration_id: registrationId,
+    auth_code: authCode
   });
   return response.data;
 };

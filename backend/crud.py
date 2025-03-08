@@ -1,27 +1,31 @@
 # crud.py
-from typing import List, Optional
-from database import db
-from models import UserCreate, SMSNotificationSettings, KeywordSettings
-from services import get_user_by_username  # <-- Changé ici
+
+from typing import List
+from db.database import db
+from models.user import UserCreate
+from models.settings import SMSNotificationSettings, KeywordSettings
+from services import get_user_by_username 
 from auth import get_password_hash
 
 # Opérations CRUD
 
-# def create_user(user: UserCreate):
-#     hashed_password = get_password_hash(user.password)
-#     user_dict = user.model_dump()
-#     user_dict["hashed_password"] = hashed_password
-#     user_dict.pop("password")
-#     db.users.insert_one(user_dict)
-#     return user_dict
+SCOPES = [
+    'https://www.googleapis.com/auth/calendar.readonly',
+    'https://www.googleapis.com/auth/classroom.courses.readonly',
+    'https://www.googleapis.com/auth/classroom.student-submissions.me.readonly',
+    'https://www.googleapis.com/auth/classroom.student-submissions.students.readonly'
+]
+
+
+
 
 
 def create_user(user: UserCreate):
     hashed_password = get_password_hash(user.password)
 
     default_settings = SMSNotificationSettings(
-        agendaFields=[],  # Aucun champ d'agenda au départ
-        phoneNumber="",  # Numéro de téléphone vide
+        agendaFields=['summary','date'],  # Aucun champ d'agenda au départ
+        phoneNumber="+213123456789",  # Numéro de téléphone vide
         keywords=[]  # Liste vide de mots-clés
     )
 
@@ -31,6 +35,8 @@ def create_user(user: UserCreate):
         "hashed_password": hashed_password,
         "settings": default_settings.model_dump()  # Convertir en dict pour MongoDB
     }
+
+    
 
     db.users.insert_one(user_dict)
     return user_dict
