@@ -77,6 +77,7 @@ SCOPES = [
 ###############################################################################
 
 ser = serial.Serial('/dev/serial0', baudrate=115200, timeout=1)
+
 def send_at_command(command, wait=3):
     """Envoie une commande AT et retourne la reponse."""
     ser.write((command + "\r\n").encode())  # Envoi de la commande
@@ -86,10 +87,6 @@ def send_at_command(command, wait=3):
 
 def send_sms_raspisms(phone_number, message):
     """Envoie un SMS a un numero donne."""
-    # print("Initialisation du mode texte pour SMS...")
-    print(send_at_command("AT+CMGF=1"))  # Mode texte SMS
-
-    # print(f"Envoi du SMS a {phone_number}...")
     ser.write(('AT+CMGS="' + phone_number + '"\r\n').encode())  # Numero de destination
     time.sleep(1)
     ser.write((message + "\r\n").encode())  # Contenu du message
@@ -293,6 +290,147 @@ def get_upcoming_assignments(creds, max_days_ahead=30):
 # Notification Monitoring System
 ###############################################################################
 
+# def check_events_and_assignments(user_id):
+#     """
+#     Main monitoring function that checks calendar events and classroom assignments.
+#     Runs in a continuous loop for each user.
+    
+#     Args:
+#         user_id (str): MongoDB ID of the user document
+#     """
+#     sent_notifications = set()
+#     while True:
+#         try:
+#             user = users_collection.find_one({"_id": user_id})
+#             if not user:
+#                 print(f"User with ID {user_id} no longer exists. Stopping thread.")
+#                 break
+
+#             # Get user settings
+#             username=user.get('username')
+#             phone_number = user["settings"].get("phoneNumber", None)
+#             agenda_fields = user["settings"].get("agendaFields", [])
+#             keywords = [kw["text"] for kw in user["settings"].get("keywords", [])]
+#             notification_times = {kw["text"]: kw.get("notificationTimes", []) for kw in user["settings"].get("keywords", [])}
+#             creds=get_user_credentials(user)
+#             print(f"---------------------------------------------------------")
+#             print(f"\n {username} DATA:")
+#             print(f" Phone Number: {phone_number}")
+#             print(f"NOTIFICATION SETTINGS:")
+#             print(f"Agenda Fields: {agenda_fields}")
+#             for kw, times in notification_times.items():
+#                 print(f"Keyword '{kw}' notification times: {times} minutes before")
+
+#             now = datetime.now(ALGERIA_TIMEZONE)
+#             events = get_upcoming_events(creds)
+
+#             for event in events:
+#                 try:
+#                     event_id = event.get('id')
+#                     event_summary = event.get("summary", "")
+
+#                     # Find keyword that appears in the event title
+#                     matched_keyword = next((kw for kw in keywords if kw in event_summary), None)
+                    
+
+                    
+#                     # Check if we should send an SMS
+#                     if not matched_keyword:
+#                         continue
+
+#                     # Get event start time and convert to Algeria timezone
+#                     start_str = event['start'].get('dateTime', event['start'].get('date'))
+#                     start_time_utc = datetime.fromisoformat(start_str)
+
+                    
+
+#                     if start_time_utc.tzinfo is not None:
+#                         start_time = start_time_utc.astimezone(ALGERIA_TIMEZONE)
+#                     else:
+#                         # If no timezone info, assume it's in UTC
+#                         start_time_utc = start_time_utc.replace(tzinfo=UTC)
+#                         start_time = start_time_utc.astimezone(ALGERIA_TIMEZONE)
+                    
+#                     print("start time (Algeria) : ", start_time)
+                    
+#                     # Get notification times for this keyword
+#                     notification_minutes = notification_times.get(matched_keyword, [])
+#                     print(f"---------------------------------------------------------")
+#                     print(f"\nFor user : {username}\nEvent : {event_summary}\nMatched word :  {matched_keyword}\nStart time : {start_time}\nNotification minutes : {notification_minutes}")
+#                     print(f"---------------------------------------------------------")
+                    
+#                     if not notification_minutes:
+#                         continue  # No notification times defined for this keyword
+
+#                     for minutes_before in notification_minutes:
+#                         notification_time = start_time - timedelta(minutes=minutes_before)
+#                         notification_key = f"calendar_{event_id}_{notification_time.isoformat()}"
+#                         # print("for user : ", user.get('username'), " with : ", phone_number)
+#                         # print("notif time (Algeria) : ", notification_time)
+#                         print(f"\nFor user : {username}\nEvent : {event_summary}\nNotification at : {notification_time}")
+
+                        
+#                         if notification_key not in sent_notifications:
+#                             time_diff = abs((notification_time - now).total_seconds())
+#                             print(f"Notification time : {notification_time}\nTime_diff : {time_diff}")
+
+#                             if time_diff <= 300:  # 5-minute window
+#                                 # Build SMS message dynamically
+#                                 message = build_event_message(event, agenda_fields)
+                                    
+#                                 if not message:
+#                                     continue  # No valid fields found
+#                                 try:
+#                                     send_sms_raspisms(phone_number, message)
+#                                     sent_notifications.add(notification_key)
+#                                     print(f"Notification sent for: {event_summary}")
+#                                 except Exception as e:
+#                                     print(f"Error sending SMS: {e}")
+#                 except Exception as event_error:
+#                     print(f"Error processing event: {event_error}")
+
+#             assignments = get_upcoming_assignments(creds)
+#             for assignment in assignments:
+#                 try:
+#                     assignment_title = assignment['title']
+#                     assignment_deadline = assignment['deadline']
+#                     classroom_course_name = assignment['course_name']
+                    
+#                     # Define notification times (1 day and 1 hour before)
+#                     classroom_notification_minutes = [1440, 60]  # 1440 minutes = 24 hours, 60 minutes = 1 hour
+                    
+#                     for classroom_minutes_before in classroom_notification_minutes:
+#                         classroom_notification_time = assignment_deadline - timedelta(minutes=classroom_minutes_before)
+#                         classroom_notification_key = f"classroom_{assignment_title}_{classroom_notification_time.isoformat()}"
+#                         # print("for classroom user: ", user.get('username'), " with: ", phone_number)
+#                         # print("classroom notification time (Algeria): ", classroom_notification_time)
+                        
+#                         if classroom_notification_key not in sent_notifications:
+#                             classroom_time_diff = abs((classroom_notification_time - now).total_seconds())
+#                             # print("classroom_time_diff: ", classroom_time_diff)
+                            
+#                             if classroom_time_diff <= 300:  # 5-minute window
+#                                 classroom_message = f"Classroom Deadline :\n'{assignment_title}' for {classroom_course_name} is due at {assignment_deadline.strftime('%H:%M')}"
+#                                 try:
+#                                     send_sms_raspisms(phone_number, classroom_message)
+#                                     sent_notifications.add(classroom_notification_key)
+#                                     print(f"Notification sent for classroom assignment: {assignment_title}")
+#                                 except Exception as classroom_e:
+#                                     print(f"Error sending classroom SMS: {classroom_e}")
+                
+#                 except Exception as classroom_assignment_error:
+#                     print(f"Error processing classroom assignment: {classroom_assignment_error}")
+
+#             # Clean up old notifications (older than 24 hours)
+#             cutoff_time = now - timedelta(hours=24)
+#             sent_notifications = {
+#                 notif for notif in sent_notifications
+#                 if datetime.fromisoformat(notif.split('_')[-1]) >= cutoff_time
+#             }
+#         except Exception as main_error:
+#             print(f"Main error: {main_error}")
+#         time.sleep(60)  # Check every minute
+
 def check_events_and_assignments(user_id):
     """
     Main monitoring function that checks calendar events and classroom assignments.
@@ -316,13 +454,16 @@ def check_events_and_assignments(user_id):
             keywords = [kw["text"] for kw in user["settings"].get("keywords", [])]
             notification_times = {kw["text"]: kw.get("notificationTimes", []) for kw in user["settings"].get("keywords", [])}
             creds=get_user_credentials(user)
-            print(f"---------------------------------------------------------")
-            print(f"\n {username} DATA:")
-            print(f" Phone Number: {phone_number}")
+            
+            print("\n" + "="*50)
+            print(f"USER: {username}")
+            print(f"Phone: {phone_number}")
+            print("-"*50)
             print(f"NOTIFICATION SETTINGS:")
-            print(f"Agenda Fields: {agenda_fields}")
+            print(f"Agenda Fields: {', '.join(agenda_fields)}")
             for kw, times in notification_times.items():
-                print(f"Keyword '{kw}' notification times: {times} minutes before")
+                print(f"Keyword '{kw}' -> {', '.join(map(str, times))} minutes before")
+            print("-"*50)
 
             now = datetime.now(ALGERIA_TIMEZONE)
             events = get_upcoming_events(creds)
@@ -335,8 +476,6 @@ def check_events_and_assignments(user_id):
                     # Find keyword that appears in the event title
                     matched_keyword = next((kw for kw in keywords if kw in event_summary), None)
                     
-
-                    
                     # Check if we should send an SMS
                     if not matched_keyword:
                         continue
@@ -345,8 +484,6 @@ def check_events_and_assignments(user_id):
                     start_str = event['start'].get('dateTime', event['start'].get('date'))
                     start_time_utc = datetime.fromisoformat(start_str)
 
-                    
-
                     if start_time_utc.tzinfo is not None:
                         start_time = start_time_utc.astimezone(ALGERIA_TIMEZONE)
                     else:
@@ -354,13 +491,13 @@ def check_events_and_assignments(user_id):
                         start_time_utc = start_time_utc.replace(tzinfo=UTC)
                         start_time = start_time_utc.astimezone(ALGERIA_TIMEZONE)
                     
-                    print("start time (Algeria) : ", start_time)
-                    
                     # Get notification times for this keyword
                     notification_minutes = notification_times.get(matched_keyword, [])
-                    print(f"---------------------------------------------------------")
-                    print(f"\nFor user : {username}\nEvent : {event_summary}\nMatched word :  {matched_keyword}\nStart time : {start_time}\nNotification minutes : {notification_minutes}")
-                    print(f"---------------------------------------------------------")
+                    print("\n" + "*"*25+ " <" + username + "> "+"*"*25)
+                    print(f"EVENT MATCH: {event_summary}")
+                    print(f"Matched keyword: {matched_keyword}")
+                    print(f"Start time: {start_time.strftime('%Y-%m-%d %H:%M')} (Algeria)")
+                    print(f"Notifications: {', '.join(map(str, notification_minutes))} minutes before")
                     
                     if not notification_minutes:
                         continue  # No notification times defined for this keyword
@@ -368,14 +505,15 @@ def check_events_and_assignments(user_id):
                     for minutes_before in notification_minutes:
                         notification_time = start_time - timedelta(minutes=minutes_before)
                         notification_key = f"calendar_{event_id}_{notification_time.isoformat()}"
-                        # print("for user : ", user.get('username'), " with : ", phone_number)
-                        # print("notif time (Algeria) : ", notification_time)
-                        print(f"\nFor user : {username}\nEvent : {event_summary}\nNotification at : {notification_time}")
-
-                        
+                    
                         if notification_key not in sent_notifications:
                             time_diff = abs((notification_time - now).total_seconds())
-                            print(f"Notification time : {notification_time}\nTime_diff : {time_diff}")
+                            print(f"\nNOTIFICATION CHECK:")
+                            print(f"User: {username}")
+                            print(f"   Event: {event_summary}")
+                            print(f"   Alert: {minutes_before} minutes before")
+                            print(f"   Notify at: {notification_time.strftime('%Y-%m-%d %H:%M')}")
+                            print(f"   Time difference: {time_diff:.1f} seconds")
 
                             if time_diff <= 300:  # 5-minute window
                                 # Build SMS message dynamically
@@ -386,11 +524,11 @@ def check_events_and_assignments(user_id):
                                 try:
                                     send_sms_raspisms(phone_number, message)
                                     sent_notifications.add(notification_key)
-                                    print(f"Notification sent for: {event_summary}")
+                                    print(f"SMS SENT for: {event_summary}")
                                 except Exception as e:
-                                    print(f"Error sending SMS: {e}")
+                                    print(f"SMS ERROR: {e}")
                 except Exception as event_error:
-                    print(f"Error processing event: {event_error}")
+                    print(f"EVENT PROCESSING ERROR: {event_error}")
 
             assignments = get_upcoming_assignments(creds)
             for assignment in assignments:
@@ -402,36 +540,48 @@ def check_events_and_assignments(user_id):
                     # Define notification times (1 day and 1 hour before)
                     classroom_notification_minutes = [1440, 60]  # 1440 minutes = 24 hours, 60 minutes = 1 hour
                     
+                    print("\n" + "*"*25+ " <" + username + "> "+"*"*25)
+                    print(f"CLASSROOM: {assignment_title}")
+                    print(f"Course: {classroom_course_name}")
+                    print(f"Deadline: {assignment_deadline.strftime('%Y-%m-%d %H:%M')}")
+                    
                     for classroom_minutes_before in classroom_notification_minutes:
                         classroom_notification_time = assignment_deadline - timedelta(minutes=classroom_minutes_before)
                         classroom_notification_key = f"classroom_{assignment_title}_{classroom_notification_time.isoformat()}"
-                        # print("for classroom user: ", user.get('username'), " with: ", phone_number)
-                        # print("classroom notification time (Algeria): ", classroom_notification_time)
+                        
+                        
                         
                         if classroom_notification_key not in sent_notifications:
                             classroom_time_diff = abs((classroom_notification_time - now).total_seconds())
-                            # print("classroom_time_diff: ", classroom_time_diff)
+                            print(f"\nCLASSROOM NOTIFICATION:")
+                            print(f"   Alert: {classroom_minutes_before} minutes before")
+                            print(f"   Notify at: {classroom_notification_time.strftime('%Y-%m-%d %H:%M')}")   
+                            print(f"   Time difference: {classroom_time_diff:.1f} seconds")
                             
                             if classroom_time_diff <= 300:  # 5-minute window
                                 classroom_message = f"Classroom Deadline :\n'{assignment_title}' for {classroom_course_name} is due at {assignment_deadline.strftime('%H:%M')}"
                                 try:
                                     send_sms_raspisms(phone_number, classroom_message)
                                     sent_notifications.add(classroom_notification_key)
-                                    print(f"Notification sent for classroom assignment: {assignment_title}")
+                                    print(f"CLASSROOM SMS SENT for: {assignment_title}")
                                 except Exception as classroom_e:
-                                    print(f"Error sending classroom SMS: {classroom_e}")
+                                    print(f"CLASSROOM SMS ERROR: {classroom_e}")
                 
                 except Exception as classroom_assignment_error:
-                    print(f"Error processing classroom assignment: {classroom_assignment_error}")
+                    print(f"CLASSROOM PROCESSING ERROR: {classroom_assignment_error}")
 
-            # Clean up old notifications (older than 24 hours)
+             # Clean up old notifications (older than 24 hours)
             cutoff_time = now - timedelta(hours=24)
             sent_notifications = {
                 notif for notif in sent_notifications
                 if datetime.fromisoformat(notif.split('_')[-1]) >= cutoff_time
             }
         except Exception as main_error:
-            print(f"Main error: {main_error}")
+            print(f"MAIN ERROR: {main_error}")
+        
+        print("\n" + "="*50)
+        print(f"Sleeping for 60 seconds...")
+        print("="*50)
         time.sleep(60)  # Check every minute
 
 ###############################################################################
@@ -495,4 +645,4 @@ def main():
     ser.close()
 
 if __name__ == '__main__':
-    main() 
+    main()  
