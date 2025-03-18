@@ -41,3 +41,7 @@ Thumbs.db
 .vscode/
 *.swp
 *.swo
+
+# IoT
+IoT.py
+IoT_to_deliver.py

@@ -393,97 +393,112 @@ def get_upcoming_assignments(creds, max_days_ahead=30):
 
 def calendar_sync_thread(creds):
     """
-    Thread for synchronization with Google Calendar.
-    
-    - First performs a complete synchronization (full sync) if no sync token exists.
-    - Then, in a loop, uses the sync token to retrieve only modifications.
-    - In case of changes, updates the local cache and sends events to IoT Edge.
+    - Fetches user information from the database using user_id.
+    - Initializes storage for the user's cached events and assignments if not already set.
+    - Performs an initial synchronization if no previous sync token exists.
+    - Continuously checks for updates to events and assignments.
+    - Sends new or updated data to the cloud, ensuring each user has their own stored data.
     """
+
     global current_sync_token, cached_events, cached_assignments
 
-    # Initial complete synchronization
-    if current_sync_token is None:
-        events, new_token = get_calendar_events_sync(creds, None)
-        cached_events = events
-        current_sync_token = new_token
-        
-        # Retrieve Classroom assignments
-        cached_assignments = get_upcoming_assignments(creds)
-        
-        # Send both types of data to IoT Edge
-        send_to_iot_edge(cached_events, cached_assignments)
-    
-    # Incremental synchronization
-    while True:
-        # Synchronize with Calendar
-        changes, new_token = get_calendar_events_sync(creds, current_sync_token)
-        calendar_updated = False
-        
-        if changes:
-            cached_events = update_cached_events(changes, cached_events)
-            current_sync_token = new_token
-            calendar_updated = True
-            print("Changes detected in Google Calendar.")
-        else:
-            print("No changes detected in Google Calendar.")
-        
-        # Synchronize with Classroom (no sync token, so complete sync)
-        new_assignments = get_upcoming_assignments(creds)
-        classroom_updated = False
-        
-        # Check if there are changes in assignments
-        if json.dumps(sorted(new_assignments, key=lambda x: x['id'])) != json.dumps(sorted(cached_assignments, key=lambda x: x['id'])):
-            cached_assignments = new_assignments
-            classroom_updated = True
-            print("Changes detected in Google Classroom.")
-        else:
-            print("No changes detected in Google Classroom.")
-            
-        # Send to IoT Edge if something has changed
-        if calendar_updated or classroom_updated:
-            send_to_iot_edge(cached_events, cached_assignments)
-        
-        time.sleep(60)  # Check every 60 seconds
+    # Récupérer l'utilisateur depuis la base de données
+    user = users_collection.find_one({"_id": user_id})
 
-def send_to_iot_edge(events, assignments):
+    if not user:
+        print(f"Utilisateur avec l'ID {user_id} non trouvé. Arrêt du thread.")
+        return
+
+    # Récupérer les informations de l'utilisateur
+    username = user.get("username")
+    phone_number = user["settings"].get("phoneNumber")
+    agenda_fields = user["settings"].get("agendaFields", [])
+
+    print(f"Initialisation de la synchronisation pour {username} ({user_id})")
+
+    # Initialiser les données si elles n'existent pas
+    if user_id not in current_sync_token:
+        events, new_token = get_calendar_events_sync(user_id, None)
+        assignments = get_upcoming_assignments(user_id)
+
+        current_sync_token[user_id] = new_token
+        cached_events[user_id] = events
+        cached_assignments[user_id] = assignments
+        send_to_iot_edge(events, assignments, user_id)
+
+    # Boucle de synchronisation
+    while True:
+        changes, new_token = get_calendar_events_sync(user_id, current_sync_token[user_id])
+        calendar_updated = False
+
+        if changes:
+            cached_events[user_id] = update_cached_events(changes, cached_events[user_id])
+            current_sync_token[user_id] = new_token
+            calendar_updated = True
+
+        new_assignments = get_upcoming_assignments(user_id)
+        classroom_updated = (new_assignments != cached_assignments[user_id])
+
+        if classroom_updated:
+            cached_assignments[user_id] = new_assignments
+
+        if calendar_updated or classroom_updated:
+            send_to_iot_edge(cached_events[user_id], cached_assignments[user_id], user_id)
+
+        time.sleep(60)
+
+
+def send_to_iot_edge(events, assignments, user_id):
     """
     Sends events and assignments to Azure IoT Edge via Azure IoT Hub.
-    Also updates the local cache simulating elements on the edge.
+    Each user's data is stored separately in the cloud to ensure  
+    personalized synchronization. Updates the local cache for the given user.
     """
-    global edge_events, edge_assignments
+    global cached_events, cached_assignments
     try:
         client = IoTHubModuleClient.create_from_connection_string(IOT_HUB_CONNECTION_STRING)
-        MAX_ITEMS = 50  # Adjust according to your needs
+        MAX_ITEMS = 50  # Limit the number of items sent per request
         
-        # Send Calendar events
-        message_events = json.dumps({"events": events[:MAX_ITEMS]})
-        client.send_message(message_events)
-        print("Calendar events sent to IoT Edge.")
+        # Prepare the message with user-specific data
+        message = json.dumps({
+            "user_id": user_id,
+            "events": events[:MAX_ITEMS],
+            "assignments": assignments[:MAX_ITEMS]
+        })
         
-        # Send Classroom assignments
-        message_assignments = json.dumps({"assignments": assignments[:MAX_ITEMS]})
-        client.send_message(message_assignments)
-        print("Classroom assignments sent to IoT Edge.")
+        # Send data to IoT Edge
+        client.send_message(message)
+        print(f"Data for user {user_id} sent to IoT Edge.")
+
     except Exception as e:
-        print(f"Error when sending to IoT Edge: {e}")
+        print(f"Error when sending to IoT Edge for user {user_id}: {e}")
+
     finally:
         client.shutdown()
-    
-    # Update local caches
-    edge_events = events
-    edge_assignments = assignments
 
-def get_events_from_edge():
-    """
-    Returns events stored in the local cache simulating Azure IoT Edge.
-    """
-    return edge_events
+    # Update local cache for this user
+    cached_events[user_id] = events
+    cached_assignments[user_id] = assignments
 
-def get_assignments_from_edge():
+
+def get_events_from_edge(user_id):
     """
-    Returns assignments stored in the local cache simulating Azure IoT Edge.
+    Retrieves the calendar events stored in the local cache for a specific user.
+    Simulates fetching data from Azure IoT Edge.
+    Returns:
+        list: The list of cached calendar events for the user.
     """
-    return edge_assignments
+    return cached_events.get(user_id, [])
+
+def get_assignments_from_edge(user_id):
+    """
+    Retrieves the classroom assignments stored in the local cache for a specific user.
+    Simulates fetching data from Azure IoT Edge.
+
+    Returns:
+        list: The list of cached classroom assignments for the user.
+    """
+    return cached_assignments.get(user_id, [])
 
 def get_calendar_events_sync(creds, sync_token):
     """
